@@ -2,9 +2,7 @@ mod load;
 
 use std::ops::Index;
 
-use load::load;
-
-use self::load::InvalidBoardError;
+use load::{InvalidBoardError, load};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Cell {
@@ -50,7 +48,14 @@ impl Board {
     }
 
     pub fn from_file(file_name: &str) -> Result<Board, InvalidBoardError> {
-        load(file_name)
+        let defined_values = load(file_name)?;
+        let mut result = Board::new();
+
+        for cell_value in defined_values {
+            result.set_index(cell_value.index, Cell::Static(cell_value.value));
+        }
+
+        Ok(result)
     }
 
     pub fn rows(&self) -> [Row; 9] {
@@ -76,15 +81,15 @@ impl Board {
     }
 
     pub fn set(&mut self, row: u8, col: u8, val: u8) {
-        let index = (row - 1) * 9 + col - 1;
-        self.set_index(index, val)
+        let index = index_of(row, col);
+        self.set_index(index, Cell::User(val))
     }
 
-    pub fn set_index(&mut self, index: u8, val: u8) {
-        self.cells[index as usize] = Cell::User(val);
+    pub fn set_index(&mut self, index: usize, val: Cell) {
+        self.cells[index as usize] = val;
     }
 }
 
-fn index(row: u8, col: u8) -> usize {
+pub fn index_of(row: u8, col: u8) -> usize {
     ((row - 1) * 9 + col - 1) as usize
 }
