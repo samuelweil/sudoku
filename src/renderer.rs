@@ -51,7 +51,7 @@ impl ConsoleRenderer {
     fn draw(&self) {
         println!("{}", HEADER);
         for (n_buf, buf) in (&self.buffers).into_iter().enumerate() {
-            println!("{}{}", n_buf, buf.into_iter().collect::<String>());
+            println!("{}{}", n_buf + 1, buf.into_iter().collect::<String>());
             match n_buf {
                 2 | 5 => println!("{}", DIVIDER),
                 _ => {}

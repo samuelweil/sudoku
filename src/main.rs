@@ -11,19 +11,19 @@ fn main() -> io::Result<()> {
     let mut board = Board::new();
     let mut renderer = ConsoleRenderer::new();
 
-    renderer.render(&board);
-
     loop {
+        renderer.render(&board);
+
         let mut input = String::new();
         println!("{}", "Enter next command");
         io::stdin().read_line(&mut input)?;
+
+        clear_screen();
 
         match parse_tokens(input) {
             Ok((row, col, val)) => board.set(row, col, val),
             Err(e) => println!("{}", e),
         }
-
-        renderer.render(&board);
     }
 }
 
@@ -38,6 +38,10 @@ fn parse_tokens(s: String) -> ParseResult<(u8, u8, u8)> {
     let val = parse_arg(tokens[2])?;
 
     Ok((row, col, val))
+}
+
+fn clear_screen() {
+    print!("\x1B[2J\x1B[1;1H");
 }
 
 #[derive(Clone, Debug)]
