@@ -1,0 +1,5 @@
+image: rust
+
+unit tests:
+  script:
+    - cargo test
