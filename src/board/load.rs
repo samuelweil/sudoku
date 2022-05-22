@@ -84,11 +84,13 @@ fn is_valid_char(c: char) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::board::Cell;
+
     use super::*;
 
     #[test]
     fn test_load_file() {
-        let board = Board::from_file("data/med.board").unwrap();
-        assert_eq!(board.row(1).col(2), Option::Some(3u8));
+        let board = Board::from_file("data/med.board").unwrap(); 
+        assert_eq!(board.row(1).col(2), Cell::User(3u8));
     }
 }

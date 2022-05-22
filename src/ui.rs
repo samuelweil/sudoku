@@ -103,8 +103,10 @@ impl Ui for ConsoleUi {
 
 fn draw_cell(cell: &Cell) -> char {
     match cell {
-        None => '-',
-        Some(u) => (*u + 48) as char,
+        Cell::Empty => '-',
+        Cell::Static(u) => (*u + 48) as char,
+        Cell::User(u) => (*u + 48) as char,
+        Cell::Error(u) => (*u + 48) as char,
     }
 }
 

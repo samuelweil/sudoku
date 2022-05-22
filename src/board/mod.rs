@@ -4,8 +4,13 @@ use load::load;
 
 use self::load::InvalidBoardError;
 
-pub type Cell = Option<u8>;
-//pub type Row = [Cell; 9];
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum Cell {
+    Empty,
+    Static(u8),
+    User(u8),
+    Error(u8)
+}
 
 pub struct Row([Cell; 9]);
 
@@ -31,7 +36,7 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         Board {
-            cells: [Option::None; 81],
+            cells: [Cell::Empty; 81],
         }
     }
 
@@ -56,7 +61,7 @@ impl Board {
     pub fn row(&self, row: usize) -> Row {
         let start_index = (row - 1) * 9;
         let stop_index = row * 9;
-        let mut result = [Option::None; 9];
+        let mut result = [Cell::Empty; 9];
         result.copy_from_slice(&self.cells[start_index..stop_index]);
         Row(result)
     }
@@ -67,6 +72,6 @@ impl Board {
     }
 
     pub fn set_index(&mut self, index: u8, val: u8) {
-        self.cells[index as usize] = Some(val);
+        self.cells[index as usize] = Cell::User(val);
     }
 }
