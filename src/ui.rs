@@ -82,20 +82,13 @@ impl Ui for ConsoleUi {
             io::stdout().flush().unwrap();
 
             let mut buffer = String::new();
-            io::stdin().read_line(&mut buffer);
+            io::stdin().read_line(&mut buffer).unwrap();
 
             dbg!(&buffer);
 
-            let tokens: Vec<String> = buffer
-                .split_ascii_whitespace()
-                .map(|s| String::from(s.trim()))
-                .collect();
-
-            return Cmd::Set {
-                row: 1,
-                col: 1,
-                val: 1,
-            };
+            if let Ok(cmd) = parse_cmd(&buffer) {
+                return cmd;
+            }
         }
     }
 
@@ -113,4 +106,41 @@ fn draw_cell(cell: &Cell) -> char {
 
 fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
+}
+
+fn parse_cmd(input: &String) -> Result<Cmd, io::Error> {
+    let tokens: Vec<String> = input
+        .split_ascii_whitespace()
+        .map(|s| String::from(s.trim()))
+        .collect();
+
+    Ok(Cmd::Set {
+        row: tokens[1].parse::<u8>().unwrap(),
+        col: tokens[2].parse::<u8>().unwrap(),
+        val: tokens[3].parse::<u8>().unwrap(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cmd::Cmd;
+
+    #[test]
+    fn test_parsing_valid_set() {
+        fn test(input: &'static str, exp_row: u8, exp_col: u8, exp_val: u8) {
+            if let Ok(Cmd::Set { row, col, val }) = parse_cmd(&String::from(input)) {
+                assert_eq!(row, exp_row);
+                assert_eq!(col, exp_col);
+                assert_eq!(val, exp_val);
+            } else {
+                panic!("Parsing {} should return valid Set command", input);
+            }
+        }
+
+        test("set 1 2 3", 1, 2, 3);
+        test("set 4 5 6", 4, 5, 6);
+        test("s 1 2 3", 1, 2, 3);
+        test("s 4 5 6", 4, 5, 6);
+    }
 }
