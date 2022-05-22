@@ -1,30 +1,15 @@
-use std::{io::{self, Write}, error::Error};
+use std::{
+    error::Error,
+    io::{self, Write},
+};
 
-use crate::board::{Board, Cell, Row};
-
-pub struct Command {
-    pub name: String,
-    pub args: Vec<String>,
-}
-
-impl Command {
-    fn from_vec(mut vec: Vec<String>) -> Command {
-        let args = if vec.len() > 1 {
-            vec.drain(1..).collect()
-        } else {
-            Vec::new()
-        };
-
-        Command {
-            name: vec.remove(0),
-            args,
-        }
-    }
-}
-
+use crate::{
+    board::{Board, Cell, Row},
+    cmd::Cmd,
+};
 pub trait Ui {
     fn draw(&mut self, board: &Board);
-    fn get_input(&mut self) -> io::Result<Command>;
+    fn get_input(&mut self) -> Cmd;
     fn display_err<E: Error>(&mut self, text: E);
 }
 
@@ -91,13 +76,13 @@ impl Ui for ConsoleUi {
         self.draw_buffer();
     }
 
-    fn get_input(&mut self) -> io::Result<Command> {
+    fn get_input(&mut self) -> Cmd {
         loop {
             print!("> ");
             io::stdout().flush().unwrap();
 
             let mut buffer = String::new();
-            io::stdin().read_line(&mut buffer)?;
+            io::stdin().read_line(&mut buffer);
 
             dbg!(&buffer);
 
@@ -106,14 +91,16 @@ impl Ui for ConsoleUi {
                 .map(|s| String::from(s.trim()))
                 .collect();
 
-            if tokens.len() > 1 {
-                return Ok(Command::from_vec(tokens));
-            }
+            return Cmd::Set {
+                row: 1,
+                col: 1,
+                val: 1,
+            };
         }
     }
 
     fn display_err<E: Error>(&mut self, e: E) {
-        eprintln!("Error: {}", e)    
+        eprintln!("Error: {}", e)
     }
 }
 
