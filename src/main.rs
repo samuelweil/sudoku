@@ -1,18 +1,18 @@
 mod board;
-mod renderer;
+mod ui;
 
 use core::fmt;
 use std::{error, io};
 
 use board::Board;
-use renderer::{ConsoleRenderer, Renderer};
+use ui::{ConsoleUi, Ui};
 
 fn main() -> io::Result<()> {
     let mut board = Board::from_file("data/med.board").unwrap();
-    let mut renderer = ConsoleRenderer::new();
+    let mut renderer = ConsoleUi::new();
 
     loop {
-        renderer.render(&board);
+        renderer.draw(&board);
 
         let mut input = String::new();
         println!("{}", "Enter next command");

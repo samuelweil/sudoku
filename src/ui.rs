@@ -1,10 +1,10 @@
 use crate::board::{Board, Cell, Row};
 
-pub trait Renderer {
-    fn render(&mut self, board: &Board);
+pub trait Ui {
+    fn draw(&mut self, board: &Board);
 }
 
-pub struct ConsoleRenderer {
+pub struct ConsoleUi {
     buffers: [Vec<char>; 9],
 }
 
@@ -28,9 +28,9 @@ fn new_buffer() -> Vec<char> {
     String::from("|       |       |       |").chars().collect()
 }
 
-impl ConsoleRenderer {
-    pub fn new() -> ConsoleRenderer {
-        ConsoleRenderer {
+impl ConsoleUi {
+    pub fn new() -> ConsoleUi {
+        ConsoleUi {
             buffers: ['a'; 9].map(|_| new_buffer()),
         }
     }
@@ -48,7 +48,7 @@ impl ConsoleRenderer {
         }
     }
 
-    fn draw(&self) {
+    fn draw_buffer(&self) {
         println!("{}", HEADER);
         for (n_buf, buf) in (&self.buffers).into_iter().enumerate() {
             println!("{}{}", n_buf + 1, buf.into_iter().collect::<String>());
@@ -60,10 +60,10 @@ impl ConsoleRenderer {
     }
 }
 
-impl Renderer for ConsoleRenderer {
-    fn render(&mut self, board: &Board) {
+impl Ui for ConsoleUi {
+    fn draw(&mut self, board: &Board) {
         self.update_buffers(board);
-        self.draw();
+        self.draw_buffer();
     }
 }
 
