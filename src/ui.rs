@@ -4,6 +4,8 @@ use std::{
     io::{self, Write},
 };
 
+use colored::*;
+
 use crate::{
     board::{Board, Cell, Row},
     cmd::Cmd,
@@ -14,67 +16,50 @@ pub trait Ui {
     fn display_err<E: Error>(&mut self, text: E);
 }
 
-pub struct ConsoleUi {
-    buffers: [Vec<char>; 9],
-}
-
-fn mapping(index: usize) -> usize {
-    let (group, offset) = if index > 5 {
-        (2, 16)
-    } else if index > 2 {
-        (1, 8)
-    } else {
-        (0, 0)
-    };
-
-    2 * (index - (group * 3)) + offset + 2
-}
-
 const HEADER: &str = "   1 2 3   4 5 6   7 8 9";
+const DIVIDER: &str = " |-----------------------|";
 
-static DIVIDER: &str = " |-----------------------|";
-
-fn new_buffer() -> Vec<char> {
-    String::from("|       |       |       |").chars().collect()
+fn repr_row(inp: (usize, Row)) -> String {
+    let reprs: Vec<String> = inp
+        .1
+        .into_iter()
+        .map(|cell| draw_cell(cell).to_string())
+        .collect();
+    format!(
+        "{}| {} {} {} | {} {} {} | {} {} {} |",
+        inp.0,
+        reprs[0],
+        reprs[1],
+        reprs[2],
+        reprs[3],
+        reprs[4],
+        reprs[5],
+        reprs[6],
+        reprs[7],
+        reprs[8]
+    )
 }
+
+pub struct ConsoleUi {}
 
 impl ConsoleUi {
     pub fn new() -> ConsoleUi {
-        ConsoleUi {
-            buffers: ['a'; 9].map(|_| new_buffer()),
-        }
-    }
-
-    fn update_buffers(&mut self, board: &Board) {
-        for (n_row, row) in board.rows().into_iter().enumerate() {
-            self.update_buffer(n_row, &row);
-        }
-    }
-
-    fn update_buffer(&mut self, n_buffer: usize, row: &Row) {
-        for (n_cell, cell) in row.into_iter().enumerate() {
-            let index = mapping(n_cell);
-            self.buffers[n_buffer][index] = draw_cell(&cell);
-        }
-    }
-
-    fn draw_buffer(&self) {
-        println!("{}", HEADER);
-        for (n_buf, buf) in (&self.buffers).into_iter().enumerate() {
-            println!("{}{}", n_buf + 1, buf.into_iter().collect::<String>());
-            match n_buf {
-                2 | 5 => println!("{}", DIVIDER),
-                _ => {}
-            };
-        }
+        ConsoleUi {}
     }
 }
 
 impl Ui for ConsoleUi {
     fn draw(&mut self, board: &Board) {
         clear_screen();
-        self.update_buffers(board);
-        self.draw_buffer();
+
+        println!("{}\n{}", HEADER, DIVIDER);
+
+        for val in board.rows().into_iter().enumerate() {
+            if val.0 == 3 || val.0 == 6 {
+                println!("{}", DIVIDER);
+            }
+            println!("{}", repr_row(val))
+        }
     }
 
     fn get_input(&mut self) -> Cmd {
@@ -101,11 +86,17 @@ impl Ui for ConsoleUi {
     }
 }
 
-fn draw_cell(cell: &Cell) -> char {
+fn draw_cell(cell: Cell) -> ColoredString {
     match cell {
-        None => '-',
-        Some(u) => (*u + 48) as char,
+        Cell::Empty => String::from("-").white(),
+        Cell::Static(u) => repr(u).white(),
+        Cell::User(u) => repr(u).green(),
+        Cell::Error(u) => repr(u).red(),
     }
+}
+
+fn repr(u: u8) -> String {
+    format!("{}", (u + 48) as char)
 }
 
 fn clear_screen() {

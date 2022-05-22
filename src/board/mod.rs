@@ -1,13 +1,25 @@
 mod load;
 
-use load::load;
+use std::ops::Index;
 
-use self::load::InvalidBoardError;
+use load::{InvalidBoardError, load};
 
-pub type Cell = Option<u8>;
-//pub type Row = [Cell; 9];
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum Cell {
+    Empty,
+    Static(u8),
+    User(u8),
+    Error(u8),
+}
 
 pub struct Row([Cell; 9]);
+
+impl Index<usize> for Row {
+    type Output = Cell;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 impl Row {
     pub fn col(&self, n_col: u8) -> Cell {
@@ -31,12 +43,19 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         Board {
-            cells: [Option::None; 81],
+            cells: [Cell::Empty; 81],
         }
     }
 
     pub fn from_file(file_name: &str) -> Result<Board, InvalidBoardError> {
-        load(file_name)
+        let defined_values = load(file_name)?;
+        let mut result = Board::new();
+
+        for cell_value in defined_values {
+            result.set_index(cell_value.index, Cell::Static(cell_value.value));
+        }
+
+        Ok(result)
     }
 
     pub fn rows(&self) -> [Row; 9] {
@@ -56,17 +75,21 @@ impl Board {
     pub fn row(&self, row: usize) -> Row {
         let start_index = (row - 1) * 9;
         let stop_index = row * 9;
-        let mut result = [Option::None; 9];
+        let mut result = [Cell::Empty; 9];
         result.copy_from_slice(&self.cells[start_index..stop_index]);
         Row(result)
     }
 
     pub fn set(&mut self, row: u8, col: u8, val: u8) {
-        let index = (row - 1) * 9 + col - 1;
-        self.set_index(index, val)
+        let index = index_of(row, col);
+        self.set_index(index, Cell::User(val))
     }
 
-    pub fn set_index(&mut self, index: u8, val: u8) {
-        self.cells[index as usize] = Some(val);
+    pub fn set_index(&mut self, index: usize, val: Cell) {
+        self.cells[index as usize] = val;
     }
+}
+
+pub fn index_of(row: u8, col: u8) -> usize {
+    ((row - 1) * 9 + col - 1) as usize
 }
