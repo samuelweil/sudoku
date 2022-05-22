@@ -1,7 +1,31 @@
+use std::{io::{self, Write}, error::Error};
+
 use crate::board::{Board, Cell, Row};
+
+pub struct Command {
+    pub name: String,
+    pub args: Vec<String>,
+}
+
+impl Command {
+    fn from_vec(mut vec: Vec<String>) -> Command {
+        let args = if vec.len() > 1 {
+            vec.drain(1..).collect()
+        } else {
+            Vec::new()
+        };
+
+        Command {
+            name: vec.remove(0),
+            args,
+        }
+    }
+}
 
 pub trait Ui {
     fn draw(&mut self, board: &Board);
+    fn get_input(&mut self) -> io::Result<Command>;
+    fn display_err<E: Error>(&mut self, text: E);
 }
 
 pub struct ConsoleUi {
@@ -62,8 +86,34 @@ impl ConsoleUi {
 
 impl Ui for ConsoleUi {
     fn draw(&mut self, board: &Board) {
+        clear_screen();
         self.update_buffers(board);
         self.draw_buffer();
+    }
+
+    fn get_input(&mut self) -> io::Result<Command> {
+        loop {
+            print!("> ");
+            io::stdout().flush().unwrap();
+
+            let mut buffer = String::new();
+            io::stdin().read_line(&mut buffer)?;
+
+            dbg!(&buffer);
+
+            let tokens: Vec<String> = buffer
+                .split_ascii_whitespace()
+                .map(|s| String::from(s.trim()))
+                .collect();
+
+            if tokens.len() > 1 {
+                return Ok(Command::from_vec(tokens));
+            }
+        }
+    }
+
+    fn display_err<E: Error>(&mut self, e: E) {
+        eprintln!("Error: {}", e)    
     }
 }
 
@@ -72,4 +122,8 @@ fn draw_cell(cell: &Cell) -> char {
         None => '-',
         Some(u) => (*u + 48) as char,
     }
+}
+
+fn clear_screen() {
+    print!("\x1B[2J\x1B[1;1H");
 }
