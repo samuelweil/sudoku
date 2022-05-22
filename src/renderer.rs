@@ -22,7 +22,7 @@ fn mapping(index: usize) -> usize {
 
 const HEADER: &str = "   1 2 3   4 5 6   7 8 9";
 
-static  DIVIDER: &str = " |-----------------------|";
+static DIVIDER: &str = " |-----------------------|";
 
 fn new_buffer() -> Vec<char> {
     String::from("|       |       |       |").chars().collect()
@@ -70,6 +70,6 @@ impl Renderer for ConsoleRenderer {
 fn draw_cell(cell: &Cell) -> char {
     match cell {
         None => '-',
-        Some(u) => (*u) as char,
+        Some(u) => (*u + 48) as char,
     }
 }

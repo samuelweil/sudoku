@@ -1,12 +1,84 @@
 mod board;
 mod renderer;
 
-use board::Board;
-use renderer::{Renderer, ConsoleRenderer};
+use core::fmt;
+use std::{error, io};
 
-fn main() {
-    let board = Board::new();
+use board::Board;
+use renderer::{ConsoleRenderer, Renderer};
+
+fn main() -> io::Result<()> {
+    let mut board = Board::new();
     let mut renderer = ConsoleRenderer::new();
 
     renderer.render(&board);
+
+    loop {
+        let mut input = String::new();
+        println!("{}", "Enter next command");
+        io::stdin().read_line(&mut input)?;
+
+        match parse_tokens(input) {
+            Ok((row, col, val)) => board.set(row, col, val),
+            Err(e) => println!("{}", e),
+        }
+
+        renderer.render(&board);
+    }
+}
+
+fn parse_tokens(s: String) -> ParseResult<(u8, u8, u8)> {
+    let tokens = s.split(" ").map(|s| s.trim()).collect::<Vec<&str>>();
+    if tokens.len() != 3 {
+        return InputError::new("3 input arguments required: row, col, val");
+    }
+
+    let row = parse_arg(tokens[0])?;
+    let col = parse_arg(tokens[1])?;
+    let val = parse_arg(tokens[2])?;
+
+    Ok((row, col, val))
+}
+
+#[derive(Clone, Debug)]
+struct InputError {
+    msg: String,
+}
+
+impl InputError {
+    fn new<T, M>(msg: M) -> ParseResult<T>
+    where
+        String: From<M>,
+    {
+        Err(InputError {
+            msg: String::from(msg),
+        })
+    }
+}
+
+impl fmt::Display for InputError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Invalid inputs {}", self.msg)
+    }
+}
+
+impl error::Error for InputError {}
+
+type ParseResult<T> = Result<T, InputError>;
+
+fn parse_error(val: &str) -> ParseResult<u8> {
+    InputError::new(format!("{} must be a number between 1-9", val))
+}
+
+fn parse_arg(input: &str) -> ParseResult<u8> {
+    match str::parse::<u8>(input) {
+        Err(_) => parse_error(input),
+        Ok(u) => {
+            if u > 0 && u < 10 {
+                Ok(u)
+            } else {
+                parse_error(input)
+            }
+        }
+    }
 }

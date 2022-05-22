@@ -1,7 +1,6 @@
 pub type Cell = Option<u8>;
 pub type Row = [Cell; 9];
 
-#[derive(Copy, Clone)]
 pub struct Board {
     pub cells: [Cell; 81],
 }
@@ -33,5 +32,10 @@ impl Board {
         let mut result = [Option::None; 9];
         result.copy_from_slice(&self.cells[start_index..stop_index]);
         result
+    }
+
+    pub fn set(&mut self, row: u8, col: u8, val: u8) {
+        let index = (row - 1) * 9 + col - 1;
+        self.cells[index as usize] = Some(val);
     }
 }
