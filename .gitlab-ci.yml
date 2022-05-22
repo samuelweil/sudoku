@@ -1,0 +1,11 @@
+image: rust
+
+unit tests:
+  before_script:
+    - cargo install cargo2junit
+  script:
+    - cargo test -- -Z unstable-options --format json --report-time | tee results.json
+    - cat results.json | cargo2junit > unit_tests.xml
+  artifacts:
+    reports:
+      junit: unit_tests.xml
