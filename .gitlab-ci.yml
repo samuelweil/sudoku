@@ -1,6 +1,8 @@
 image: rust
 
 unit tests:
+  only:
+    - merge_requests
   before_script:
     - cargo install cargo2junit
   script:
