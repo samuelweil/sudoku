@@ -1,5 +1,6 @@
 use std::{
     error::Error,
+    fmt::Display,
     io::{self, Write},
 };
 
@@ -108,11 +109,15 @@ fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
 }
 
-fn parse_cmd(input: &String) -> Result<Cmd, io::Error> {
+fn parse_cmd(input: &String) -> Result<Cmd, InputError> {
     let tokens: Vec<String> = input
         .split_ascii_whitespace()
         .map(|s| String::from(s.trim()))
         .collect();
+
+    if tokens.len() < 4 {
+        return Err(InputError::InsufficientArgs("<row> <col> <val>"));
+    }
 
     Ok(Cmd::Set {
         row: tokens[1].parse::<u8>().unwrap(),
@@ -120,6 +125,21 @@ fn parse_cmd(input: &String) -> Result<Cmd, io::Error> {
         val: tokens[3].parse::<u8>().unwrap(),
     })
 }
+
+#[derive(Debug)]
+enum InputError {
+    InsufficientArgs(&'static str),
+}
+
+impl Display for InputError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::InsufficientArgs(exp) => write!(f, "Insufficient args, expected {}", exp),
+        }
+    }
+}
+
+impl Error for InputError {}
 
 #[cfg(test)]
 mod tests {
@@ -142,5 +162,19 @@ mod tests {
         test("set 4 5 6", 4, 5, 6);
         test("s 1 2 3", 1, 2, 3);
         test("s 4 5 6", 4, 5, 6);
+    }
+
+    #[test]
+    fn test_parse_set_not_enough_args() {
+        fn test(input: &'static str) {
+            match parse_cmd(&String::from(input)) {
+                Err(InputError::InsufficientArgs(_)) => { /* Ok */ }
+                _ => panic!("Parsing {} should return InsufficientArgs error", input),
+            }
+        }
+
+        test("set");
+        test("set 1");
+        test("set 1 2");
     }
 }
