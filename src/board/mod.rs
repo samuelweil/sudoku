@@ -1,8 +1,11 @@
+mod check;
 mod load;
 
-use std::ops::Index;
+use std::fmt::Display;
 
-use load::{InvalidBoardError, load};
+use check::{check_for_duplicate, InvalidValueError};
+use load::load;
+use load::InvalidBoardError;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Cell {
@@ -12,29 +15,20 @@ pub enum Cell {
     Error(u8),
 }
 
-pub struct Row([Cell; 9]);
-
-impl Index<usize> for Row {
-    type Output = Cell;
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.0[index]
+impl From<&Cell> for Option<u8> {
+    fn from(cell: &Cell) -> Self {
+        match *cell {
+            Cell::Empty => None,
+            Cell::Static(val) => Some(val),
+            Cell::User(val) => Some(val),
+            Cell::Error(val) => Some(val),
+        }
     }
 }
 
-impl Row {
-    pub fn col(&self, n_col: u8) -> Cell {
-        self.0[(n_col - 1) as usize]
-    }
-}
-
-impl IntoIterator for &Row {
-    type Item = Cell;
-    type IntoIter = std::array::IntoIter<Cell, 9>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
-}
+pub type Row = [Cell; 9];
+pub type Column = [Cell; 9];
+type Block = [Cell; 9];
 
 pub struct Board {
     pub cells: [Cell; 81],
@@ -72,24 +66,151 @@ impl Board {
         ]
     }
 
-    pub fn row(&self, row: usize) -> Row {
-        let start_index = (row - 1) * 9;
-        let stop_index = row * 9;
+    pub fn row(&self, row: u8) -> Row {
+        let cast_row = row as usize;
+        let start_index = (cast_row - 1) * 9;
+        let stop_index = cast_row * 9;
         let mut result = [Cell::Empty; 9];
         result.copy_from_slice(&self.cells[start_index..stop_index]);
-        Row(result)
+        result
     }
 
-    pub fn set(&mut self, row: u8, col: u8, val: u8) {
+    pub fn column(&self, col: u8) -> Column {
+        let mut result = [Cell::Empty; 9];
+        for i in 0..9 {
+            result[i] = self.cells[index_of(i as u8 + 1, col)];
+        }
+        result
+    }
+
+    fn block_for(&self, row: u8, col: u8) -> Block {
+        let mut result = [Cell::Empty; 9];
+        let start_row = ((row - 1) / 3) * 3 + 1;
+        let start_col = ((col - 1) / 3) * 3 + 1;
+
+        for (ii, r) in (start_row..start_row + 3).enumerate() {
+            for (jj, c) in (start_col..start_col + 3).enumerate() {
+                result[(ii + jj) as usize] = self.cells[index_of(r, c)]
+            }
+        }
+        result
+    }
+
+    pub fn set(&mut self, row: u8, col: u8, val: u8) -> Result<(), InvalidValueError> {
         let index = index_of(row, col);
-        self.set_index(index, Cell::User(val))
+
+        if let Some((col_idx, _)) = check_for_duplicate(self.row(row), val) {
+            self.set_index(index, Cell::Error(val));
+            dbg!("Setting {} {} to Error({})", row, col, val);
+            let err = InvalidValueError {
+                cell_idx_1: index,
+                cell_idx_2: index_of(row, col_idx + 1),
+            };
+            return Err(err);
+        }
+
+        if let Some((row_idx, _)) = check_for_duplicate(self.column(col), val) {
+            self.set_index(index, Cell::Error(val));
+            dbg!("Setting {} {} to Error({})", row, col, val);
+            self.set_index(index, Cell::Error(val));
+            let err = InvalidValueError {
+                cell_idx_1: index,
+                cell_idx_2: index_of(row_idx as u8 + 1, col),
+            };
+            return Err(err);
+        }
+
+        if let Some((block_idx, _)) = check_for_duplicate(self.block_for(row, col), val) {
+            self.set_index(index, Cell::Error(val));
+            dbg!("Setting {} {} to Error({})", row, col, val);
+            self.set_index(index, Cell::Error(val));
+            let err = InvalidValueError {
+                cell_idx_1: index,
+                cell_idx_2: index_of(row + block_idx / 3, col + block_idx % 3),
+            };
+            return Err(err);
+        }
+
+        dbg!("Setting {} {} to User({})", row, col, val);
+        self.set_index(index, Cell::User(val));
+        Ok(())
     }
 
-    pub fn set_index(&mut self, index: usize, val: Cell) {
+    fn set_index(&mut self, index: usize, val: Cell) {
         self.cells[index as usize] = val;
     }
 }
 
 pub fn index_of(row: u8, col: u8) -> usize {
     ((row - 1) * 9 + col - 1) as usize
+}
+#[derive(Debug, PartialEq)]
+pub struct Coord {
+    pub row: u8,
+    pub col: u8,
+}
+
+fn coord(index: usize) -> Coord {
+    let findex = index as f32;
+    let row = ((findex / 9f32).floor() as u8) + 1;
+    let col = ((index % 9) as u8) + 1;
+    Coord { row, col }
+}
+
+impl Display for Coord {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn index_to_coord() {
+        let tests = [
+            (0, Coord { row: 1, col: 1 }),
+            (80, Coord { row: 9, col: 9 }),
+            (42, Coord { row: 5, col: 7 }),
+        ];
+
+        for (input, exp) in tests {
+            assert_eq!(coord(input), exp);
+        }
+    }
+
+    fn test_board() -> Board {
+        let mut result = Board::new();
+        result.set(1, 1, 4).unwrap();
+        result
+    }
+
+    #[test]
+    fn ok_when_no_clash() {
+        let mut board = test_board();
+        let result = board.set(1, 4, 2);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn error_when_row_has_value() {
+        let mut board = test_board();
+        let result = board.set(1, 4, 4);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn error_when_col_has_value() {
+        let mut board = test_board();
+        let result = board.set(8, 1, 4);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn error_when_block_has_value() {
+        let mut board = test_board();
+        let result = board.set(3, 3, 4);
+        assert!(result.is_err());
+    }
 }
