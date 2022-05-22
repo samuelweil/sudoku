@@ -8,7 +8,7 @@ use board::Board;
 use renderer::{ConsoleRenderer, Renderer};
 
 fn main() -> io::Result<()> {
-    let mut board = Board::new();
+    let mut board = Board::from_file("data/med.board").unwrap();
     let mut renderer = ConsoleRenderer::new();
 
     loop {

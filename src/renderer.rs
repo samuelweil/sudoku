@@ -44,7 +44,7 @@ impl ConsoleRenderer {
     fn update_buffer(&mut self, n_buffer: usize, row: &Row) {
         for (n_cell, cell) in row.into_iter().enumerate() {
             let index = mapping(n_cell);
-            self.buffers[n_buffer][index] = draw_cell(cell);
+            self.buffers[n_buffer][index] = draw_cell(&cell);
         }
     }
 
