@@ -87,9 +87,12 @@ impl Ui for ConsoleUi {
 
             dbg!(&buffer);
 
-            if let Ok(cmd) = parse_cmd(&buffer) {
-                return cmd;
-            }
+            match parse_cmd(&buffer) {
+                Ok(cmd) => return cmd,
+                Err(e) => {
+                    eprintln!("{}", e)
+                }
+            };
         }
     }
 
@@ -109,11 +112,24 @@ fn clear_screen() {
     print!("\x1B[2J\x1B[1;1H");
 }
 
+fn non_empty(inp: &str) -> Option<String> {
+    let result = inp.trim();
+    if result.is_empty() {
+        return None;
+    }
+
+    Some(String::from(result))
+}
+
 fn parse_cmd(input: &String) -> Result<Cmd, InputError> {
     let tokens: Vec<String> = input
         .split_ascii_whitespace()
-        .map(|s| String::from(s.trim()))
+        .filter_map(non_empty)
         .collect();
+
+    if tokens.len() == 0 {
+        return Err(InputError::NoInput);
+    }
 
     if tokens.len() < 4 {
         return Err(InputError::InsufficientArgs("<row> <col> <val>"));
@@ -129,12 +145,14 @@ fn parse_cmd(input: &String) -> Result<Cmd, InputError> {
 #[derive(Debug)]
 enum InputError {
     InsufficientArgs(&'static str),
+    NoInput,
 }
 
 impl Display for InputError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::InsufficientArgs(exp) => write!(f, "Insufficient args, expected {}", exp),
+            Self::NoInput => write!(f, "Expected <cmd> <...args>"),
         }
     }
 }
@@ -176,5 +194,18 @@ mod tests {
         test("set");
         test("set 1");
         test("set 1 2");
+    }
+
+    #[test]
+    fn test_parse_empty_cmd_returns_error() {
+        fn test(input: &'static str) {
+            match parse_cmd(&String::from(input)) {
+                Err(InputError::NoInput) => { /* Ok */ }
+                _ => panic!("An empty command should return NoInput error"),
+            }
+        }
+
+        test("");
+        test("  ");
     }
 }
