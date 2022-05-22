@@ -131,15 +131,21 @@ fn parse_cmd(input: &String) -> Result<Cmd, InputError> {
         return Err(InputError::NoInput);
     }
 
-    if tokens.len() < 4 {
-        return Err(InputError::InsufficientArgs("<row> <col> <val>"));
-    }
+    match &tokens[0][..] {
+        "set" | "s" => {
+            if tokens.len() < 4 {
+                return Err(InputError::InsufficientArgs("<row> <col> <val>"));
+            }
 
-    Ok(Cmd::Set {
-        row: tokens[1].parse::<u8>().unwrap(),
-        col: tokens[2].parse::<u8>().unwrap(),
-        val: tokens[3].parse::<u8>().unwrap(),
-    })
+            return Ok(Cmd::Set {
+                row: tokens[1].parse::<u8>().unwrap(),
+                col: tokens[2].parse::<u8>().unwrap(),
+                val: tokens[3].parse::<u8>().unwrap(),
+            });
+        }
+        "exit" | "e" | "quit" | "q" => Ok(Cmd::Exit),
+        _ => Err(InputError::NoInput),
+    }
 }
 
 #[derive(Debug)]
@@ -207,5 +213,21 @@ mod tests {
 
         test("");
         test("  ");
+    }
+
+    #[test]
+    fn test_parsing_exit() {
+        fn test(input: &'static str) {
+            if let Ok(Cmd::Exit) = parse_cmd(&String::from(input)) {
+                // Ok
+            } else {
+                panic!("Parsing {} should return exit command", input);
+            }
+        }
+
+        test("exit");
+        test("e");
+        test("q");
+        test("quit");
     }
 }

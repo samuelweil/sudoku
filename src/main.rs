@@ -15,6 +15,7 @@ fn main() {
     loop {
         match renderer.get_input() {
             Cmd::Set { row, col, val } => board.set(row, col, val),
+            Cmd::Exit => break,
         }
 
         renderer.draw(&board);
