@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_load_file() {
-        let board = Board::from_file("data/med.board").unwrap(); 
+        let board = Board::from_file("data/med.board").unwrap();
         assert_eq!(board.row(1).col(2), Cell::User(3u8));
     }
 }

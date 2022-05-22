@@ -1,5 +1,7 @@
 mod load;
 
+use std::ops::Index;
+
 use load::load;
 
 use self::load::InvalidBoardError;
@@ -9,10 +11,17 @@ pub enum Cell {
     Empty,
     Static(u8),
     User(u8),
-    Error(u8)
+    Error(u8),
 }
 
 pub struct Row([Cell; 9]);
+
+impl Index<usize> for Row {
+    type Output = Cell;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 impl Row {
     pub fn col(&self, n_col: u8) -> Cell {
@@ -74,4 +83,8 @@ impl Board {
     pub fn set_index(&mut self, index: u8, val: u8) {
         self.cells[index as usize] = Cell::User(val);
     }
+}
+
+fn index(row: u8, col: u8) -> usize {
+    ((row - 1) * 9 + col - 1) as usize
 }
