@@ -16,7 +16,7 @@ fn main() {
         match renderer.get_input() {
             Cmd::Set { row, col, val } => {
                 if let Err(e) = board.set(row, col, val) {
-                    println!("{}", e);
+                    renderer.display_err(e);
                 }
             }
             Cmd::Exit => break,

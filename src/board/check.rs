@@ -1,22 +1,24 @@
 use super::{coord, Cell};
-use std::fmt;
+use std::{error::Error, fmt};
 
 #[derive(Debug)]
 pub struct InvalidValueError {
-    pub cell_idx_1: usize,
-    pub cell_idx_2: usize,
+    pub new: usize,
+    pub conflicting: usize,
 }
 
 impl fmt::Display for InvalidValueError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{} and {} cannot be the same value",
-            coord(self.cell_idx_1),
-            coord(self.cell_idx_2)
+            "Cell {} cannot be set to the same value as {}",
+            coord(self.new),
+            coord(self.conflicting)
         )
     }
 }
+
+impl Error for InvalidValueError {}
 
 pub fn check_for_duplicate(cell_group: [Cell; 9], value: u8) -> Option<(u8, Cell)> {
     cell_group

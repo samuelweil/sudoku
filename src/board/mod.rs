@@ -103,8 +103,8 @@ impl Board {
             self.set_index(index, Cell::Error(val));
             dbg!("Setting {} {} to Error({})", row, col, val);
             let err = InvalidValueError {
-                cell_idx_1: index,
-                cell_idx_2: index_of(row, col_idx + 1),
+                new: index,
+                conflicting: index_of(row, col_idx + 1),
             };
             return Err(err);
         }
@@ -114,8 +114,8 @@ impl Board {
             dbg!("Setting {} {} to Error({})", row, col, val);
             self.set_index(index, Cell::Error(val));
             let err = InvalidValueError {
-                cell_idx_1: index,
-                cell_idx_2: index_of(row_idx as u8 + 1, col),
+                new: index,
+                conflicting: index_of(row_idx as u8 + 1, col),
             };
             return Err(err);
         }
@@ -125,8 +125,8 @@ impl Board {
             dbg!("Setting {} {} to Error({})", row, col, val);
             self.set_index(index, Cell::Error(val));
             let err = InvalidValueError {
-                cell_idx_1: index,
-                cell_idx_2: index_of(row + block_idx / 3, col + block_idx % 3),
+                new: index,
+                conflicting: index_of(row + block_idx / 3, col + block_idx % 3),
             };
             return Err(err);
         }
@@ -159,7 +159,7 @@ fn coord(index: usize) -> Coord {
 
 impl Display for Coord {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "({}, {})", self.row, self.col)
     }
 }
 
