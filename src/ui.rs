@@ -27,7 +27,7 @@ fn repr_row(inp: (usize, Row)) -> String {
         .collect();
     format!(
         "{}| {} {} {} | {} {} {} | {} {} {} |",
-        inp.0,
+        inp.0 + 1,
         reprs[0],
         reprs[1],
         reprs[2],
