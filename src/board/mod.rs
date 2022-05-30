@@ -99,10 +99,14 @@ impl Board {
     pub fn set(&mut self, row: u8, col: u8, val: u8) -> Result<(), InvalidValueError> {
         let index = index_of(row, col);
 
+        if let Cell::Static(_) = self.cells[index] {
+            return Err(InvalidValueError::StaticValue(index));
+        }
+
         if let Some((col_idx, _)) = check_for_duplicate(self.row(row), val) {
             self.set_index(index, Cell::Error(val));
             dbg!("Setting {} {} to Error({})", row, col, val);
-            let err = InvalidValueError {
+            let err = InvalidValueError::DuplicateValue {
                 new: index,
                 conflicting: index_of(row, col_idx + 1),
             };
@@ -113,7 +117,7 @@ impl Board {
             self.set_index(index, Cell::Error(val));
             dbg!("Setting {} {} to Error({})", row, col, val);
             self.set_index(index, Cell::Error(val));
-            let err = InvalidValueError {
+            let err = InvalidValueError::DuplicateValue {
                 new: index,
                 conflicting: index_of(row_idx as u8 + 1, col),
             };
@@ -124,7 +128,7 @@ impl Board {
             self.set_index(index, Cell::Error(val));
             dbg!("Setting {} {} to Error({})", row, col, val);
             self.set_index(index, Cell::Error(val));
-            let err = InvalidValueError {
+            let err = InvalidValueError::DuplicateValue {
                 new: index,
                 conflicting: index_of(row + block_idx / 3, col + block_idx % 3),
             };
@@ -211,6 +215,14 @@ mod tests {
     fn error_when_block_has_value() {
         let mut board = test_board();
         let result = board.set(3, 3, 4);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn error_when_overriding_game_value() {
+        let mut board = Board::new();
+        board.set_index(4, Cell::Static(4));
+        let result = board.set(1, 5, 7);
         assert!(result.is_err());
     }
 }

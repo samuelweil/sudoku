@@ -2,19 +2,23 @@ use super::{coord, Cell};
 use std::{error::Error, fmt};
 
 #[derive(Debug)]
-pub struct InvalidValueError {
-    pub new: usize,
-    pub conflicting: usize,
+pub enum InvalidValueError {
+    DuplicateValue { new: usize, conflicting: usize },
+    StaticValue(usize),
 }
 
 impl fmt::Display for InvalidValueError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Cell {} cannot be set to the same value as {}",
-            coord(self.new),
-            coord(self.conflicting)
-        )
+        let message = match self {
+            Self::DuplicateValue { new, conflicting } => format!(
+                "Cell {} cannot be set to the same value as {}",
+                coord(*new),
+                coord(*conflicting)
+            ),
+            Self::StaticValue(index) => format!("Cannot set fixed value @ {}", coord(*index)),
+        };
+
+        write!(f, "{}", message)
     }
 }
 
