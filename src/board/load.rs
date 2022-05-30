@@ -54,7 +54,7 @@ impl InvalidBoardErrorBuilder {
 #[derive(PartialEq, Debug)]
 pub struct BoardValue {
     pub index: usize,
-    pub value: u8
+    pub value: u8,
 }
 
 pub fn load(filename: &str) -> Result<Vec<BoardValue>, InvalidBoardError> {
@@ -94,7 +94,10 @@ mod tests {
 
     fn to_board_value(inp: (u8, u8, u8)) -> BoardValue {
         let (row, col, value) = inp;
-        BoardValue { index: index_of(row, col), value }   
+        BoardValue {
+            index: index_of(row, col),
+            value,
+        }
     }
 
     #[test]
@@ -130,7 +133,10 @@ mod tests {
             (8, 6, 9),
             (9, 1, 4),
             (9, 6, 6),
-        ].into_iter().map(to_board_value).collect();
+        ]
+        .into_iter()
+        .map(to_board_value)
+        .collect();
 
         load("data/med.board")
             .unwrap()

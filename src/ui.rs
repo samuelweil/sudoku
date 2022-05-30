@@ -13,7 +13,7 @@ use crate::{
 pub trait Ui {
     fn draw(&mut self, board: &Board);
     fn get_input(&mut self) -> Cmd;
-    fn display_err<E: Error>(&mut self, text: E);
+    fn display_err<E: Error>(&mut self, error: E);
 }
 
 const HEADER: &str = "   1 2 3   4 5 6   7 8 9";
@@ -27,7 +27,7 @@ fn repr_row(inp: (usize, Row)) -> String {
         .collect();
     format!(
         "{}| {} {} {} | {} {} {} | {} {} {} |",
-        inp.0,
+        inp.0 + 1,
         reprs[0],
         reprs[1],
         reprs[2],
@@ -40,11 +40,15 @@ fn repr_row(inp: (usize, Row)) -> String {
     )
 }
 
-pub struct ConsoleUi {}
+pub struct ConsoleUi {
+    err_msgs: Vec<String>,
+}
 
 impl ConsoleUi {
     pub fn new() -> ConsoleUi {
-        ConsoleUi {}
+        ConsoleUi {
+            err_msgs: Vec::new(),
+        }
     }
 }
 
@@ -60,6 +64,11 @@ impl Ui for ConsoleUi {
             }
             println!("{}", repr_row(val))
         }
+
+        for err in &self.err_msgs {
+            eprintln!("{}", err);
+        }
+        self.err_msgs.clear();
     }
 
     fn get_input(&mut self) -> Cmd {
@@ -82,7 +91,7 @@ impl Ui for ConsoleUi {
     }
 
     fn display_err<E: Error>(&mut self, e: E) {
-        eprintln!("Error: {}", e)
+        self.err_msgs.push(format!("{}", e));
     }
 }
 

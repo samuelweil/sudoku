@@ -14,7 +14,11 @@ fn main() {
 
     loop {
         match renderer.get_input() {
-            Cmd::Set { row, col, val } => board.set(row, col, val),
+            Cmd::Set { row, col, val } => {
+                if let Err(e) = board.set(row, col, val) {
+                    renderer.display_err(e);
+                }
+            }
             Cmd::Exit => break,
         }
 
