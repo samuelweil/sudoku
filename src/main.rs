@@ -19,6 +19,7 @@ fn main() {
                     renderer.display_err(e);
                 }
             }
+            Cmd::Help => renderer.show_help(),
             Cmd::Exit => break,
         }
 
