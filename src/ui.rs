@@ -177,7 +177,7 @@ impl Display for InputError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::InsufficientArgs(exp) => write!(f, "Insufficient args, expected {}", exp),
-            Self::NoInput => write!(f, "Expected <cmd> <...args>"),
+            Self::NoInput => write!(f, "Expected <cmd> <...args>. Input ? for help"),
         }
     }
 }
