@@ -14,6 +14,7 @@ pub trait Ui {
     fn draw(&mut self, board: &Board);
     fn get_input(&mut self) -> Cmd;
     fn display_err<E: Error>(&mut self, text: E);
+    fn display_msg<T: Display>(&mut self, msg: T);
     fn show_help(&mut self);
 }
 
@@ -105,6 +106,10 @@ impl Ui for ConsoleUi {
 
     fn show_help(&mut self) {
         self.show_help_next_render = true;
+    }
+
+    fn display_msg<T: Display>(&mut self, msg: T) {
+        println!("{}", msg);
     }
 }
 
