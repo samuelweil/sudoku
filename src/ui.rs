@@ -77,6 +77,7 @@ impl Ui for ConsoleUi {
             eprintln!("{}", err);
         }
         self.err_msgs.clear();
+        println!("{} values remaining", board.remaining());
     }
 
     fn get_input(&mut self) -> Cmd {

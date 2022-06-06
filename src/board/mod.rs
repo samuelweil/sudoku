@@ -83,6 +83,16 @@ impl Board {
         result
     }
 
+    pub fn remaining(&self) -> u8 {
+        self.cells
+            .into_iter()
+            .filter(|cell| match cell {
+                &Cell::Empty | &Cell::Error(_) => true,
+                _ => false,
+            })
+            .count() as u8
+    }
+
     fn block_for(&self, row: u8, col: u8) -> Block {
         let mut result = [Cell::Empty; 9];
         let start_row = ((row - 1) / 3) * 3 + 1;
