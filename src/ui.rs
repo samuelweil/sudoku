@@ -13,7 +13,8 @@ use crate::{
 pub trait Ui {
     fn draw(&mut self, board: &Board);
     fn get_input(&mut self) -> Cmd;
-    fn display_err<E: Error>(&mut self, error: E);
+    fn display_err<E: Error>(&mut self, text: E);
+    fn show_help(&mut self);
 }
 
 const HEADER: &str = "   1 2 3   4 5 6   7 8 9";
@@ -42,12 +43,14 @@ fn repr_row(inp: (usize, Row)) -> String {
 
 pub struct ConsoleUi {
     err_msgs: Vec<String>,
+    show_help_next_render: bool,
 }
 
 impl ConsoleUi {
     pub fn new() -> ConsoleUi {
         ConsoleUi {
             err_msgs: Vec::new(),
+            show_help_next_render: false,
         }
     }
 }
@@ -63,6 +66,11 @@ impl Ui for ConsoleUi {
                 println!("{}", DIVIDER);
             }
             println!("{}", repr_row(val))
+        }
+
+        if self.show_help_next_render {
+            println!("{}", HELP_MSG);
+            self.show_help_next_render = false;
         }
 
         for err in &self.err_msgs {
@@ -92,6 +100,10 @@ impl Ui for ConsoleUi {
 
     fn display_err<E: Error>(&mut self, e: E) {
         self.err_msgs.push(format!("{}", e));
+    }
+
+    fn show_help(&mut self) {
+        self.show_help_next_render = true;
     }
 }
 
@@ -144,9 +156,16 @@ fn parse_cmd(input: &String) -> Result<Cmd, InputError> {
             });
         }
         "exit" | "e" | "quit" | "q" => Ok(Cmd::Exit),
+        "help" | "h" | "?" => Ok(Cmd::Help),
         _ => Err(InputError::NoInput),
     }
 }
+
+const HELP_MSG: &str = "The following commands are supported. The letter in brackets '[]' 
+can be used as shorthand
+[s]et <row> <column> <value>:\n\tSet the value of a particular cell
+[e]xit | [q]uit:\n\tExit the game
+";
 
 #[derive(Debug)]
 enum InputError {
@@ -158,7 +177,7 @@ impl Display for InputError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::InsufficientArgs(exp) => write!(f, "Insufficient args, expected {}", exp),
-            Self::NoInput => write!(f, "Expected <cmd> <...args>"),
+            Self::NoInput => write!(f, "Expected <cmd> <...args>. Input ? for help"),
         }
     }
 }
@@ -229,5 +248,20 @@ mod tests {
         test("e");
         test("q");
         test("quit");
+    }
+
+    #[test]
+    fn test_parsing_help() {
+        fn test(input: &'static str) {
+            if let Ok(Cmd::Help) = parse_cmd(&String::from(input)) {
+                // Ok
+            } else {
+                panic!("Parsing {} should return help command", input);
+            }
+        }
+
+        test("help");
+        test("h");
+        test("?");
     }
 }
