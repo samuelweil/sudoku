@@ -25,6 +25,7 @@ fn main() {
 
         if board.remaining() == 0 {
             renderer.display_msg("Congratulations!");
+            break;
         }
         renderer.draw(&board);
     }
